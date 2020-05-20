@@ -1,8 +1,10 @@
 import tkinter as tk
+from tracker import *
 
 
 TITLE_FONT = ("Verdana", 12)
 LABEL_FONT = ("Verdana", 8)
+
 
 class ExpenseTracker(tk.Tk):
 
@@ -23,10 +25,6 @@ class ExpenseTracker(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
-
-
-def dummy_func():
-    print("works")
 
 
 class HomePage(tk.Frame):
@@ -70,13 +68,18 @@ class EnterPage(tk.Frame):
             entries.append((field, ent))
         return entries
 
+    # fetch from entry fields, create entry, clear fields
     def fetch_entries(self, entries):
+        inp = []
         for entry in entries:
+            # TODO: check if Price field is float
+            # TODO: handle empty field (i.e. error label??)
             field = entry[0]
             text = entry[1].get()
+            inp.append(text)
             entry[1].delete(0, 'end')
             entry[1].insert(0, '')
-            print('%s: "%s"' % (field, text))
+        create_entry(inp[0], inp[1], inp[2])
 
 
 
@@ -108,5 +111,6 @@ class SumPage(tk.Frame):
         button1.pack()
 
 
+# connect_db()
 app = ExpenseTracker()
 app.mainloop()
