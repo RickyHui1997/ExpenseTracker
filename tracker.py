@@ -90,7 +90,7 @@ def list_by_date(d):
         conn, cursor = execute_query(sql)
         return cursor.fetchall()
     else:
-        return date
+        return None
 
 
 # list entries by category
