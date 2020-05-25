@@ -1,8 +1,9 @@
 import sqlite3 as db
 import datetime
+import xlwt
 
 
-# global var
+# global vars
 DB_NAME = "record.db"
 
 
@@ -128,12 +129,24 @@ def translate_date(d):
         return None
 
 
-def validate_date(d):
-    return
+def export_entries(filename, data):
+    book = xlwt.Workbook(encoding="utf-8")
+    sheet = book.add_sheet("Sheet")
+    titles = ["Description", "Category", "Date", "Price"]
+    for j in range(len(titles)):
+        sheet.write(0, j, titles[j])
+    row = 1
+    for entry in data:
+        for col in range(len(entry)):
+            sheet.write(row, col, entry[col])
+        row += 1
+    book.save(filename)
 
 
 # connect_db()
-# create_entry("coffee", "drinks", 3.49)
-print(list_by_date("20200520"))
-
+# create_entry("coffee", "drinks", "a")
+# print(list_by_date("20200521"))
+#
+# e = list_all()
+# export_entries("test.xls", list_all())
 
