@@ -56,14 +56,18 @@ class HomePage(tk.Frame):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Expense Tracker", font=TITLE_FONT)
         label.pack()
-        button1 = tk.Button(self, text="Enter", command=lambda: cont.show_frame(EnterPage))
-        button1.pack()
-        button2 = tk.Button(self, text="List", command=lambda: cont.show_frame(ListPage))
-        button2.pack()
-        button3 = tk.Button(self, text="Sum", command=lambda: cont.show_frame(SumPage))
-        button3.pack()
-        button4 = tk.Button(self, text="Export", command=lambda: cont.show_frame(ExportPage))
-        button4.pack()
+        row1 = tk.Frame(self)
+        row2 = tk.Frame(self)
+        button1 = tk.Button(row1, text="Enter", command=lambda: cont.show_frame(EnterPage), font=LABEL_FONT)
+        button1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        button2 = tk.Button(row1, text="Export", command=lambda: cont.show_frame(ExportPage), font=LABEL_FONT)
+        button2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        button3 = tk.Button(row2, text="List", command=lambda: cont.show_frame(ListPage), font=LABEL_FONT)
+        button3.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        button4 = tk.Button(row2, text="Sum", command=lambda: cont.show_frame(SumPage), font=LABEL_FONT)
+        button4.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        row1.pack(fill=tk.BOTH, expand=True)
+        row2.pack(fill=tk.BOTH, expand=True)
 
 
 class EnterPage(tk.Frame):
@@ -160,10 +164,33 @@ class ExportPage(tk.Frame):
 class SumPage(tk.Frame):
     def __init__(self, parent, cont):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Total Expenses by: ", font=TITLE_FONT)
-        label.pack()
-        button1 = tk.Button(self, text="Back", command=lambda: cont.show_frame(HomePage))
-        button1.pack()
+        label1 = tk.Label(self, text="Calculate Sum: ", font=TITLE_FONT)
+        label1.pack()
+        label2 = tk.Label(self, text="Return total sum if blank", font=LABEL_FONT)
+        label2.pack()
+        entries = self.make_form()
+        enter_button = tk.Button(self, text="Enter", command=lambda: self.fetch_sum(entries))
+        enter_button.pack(side=tk.LEFT, padx=5, pady=5)
+        back_button = tk.Button(self, text="Back", command=lambda: cont.show_frame(HomePage))
+        back_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.result_message = tk.Label(self, text="", font=LABEL_FONT)
+        self.result_message.pack()
+
+    def make_form(self):
+        ent1 = entry_maker(self, "Category: ")
+        ent2 = entry_maker(self, "Date: ")
+        return [ent1, ent2]
+
+    def fetch_sum(self, entries):
+        category = entries[0].get()
+        clear_entry(entries[0])
+        date = entries[1].get()
+        clear_entry(entries[1])
+        result = calculate_total(category, date)
+        if result:
+            update_label(self.result_message, "Total is: $" + str(result), "green")
+        else:
+            update_label(self.result_message, "Not found or input error", "red")
 
 
 connect_db()

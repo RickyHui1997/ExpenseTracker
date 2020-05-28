@@ -32,7 +32,7 @@ def connect_db():
 def create_entry(description, category, price):
     now = datetime.datetime.now()
     date = now.strftime("%Y%m%d")
-    cat = category.lower()
+    cat = category.strip().lower()
     sql = """
     INSERT INTO Entry VALUES(
     '{}','{}','{}',{}
@@ -43,7 +43,6 @@ def create_entry(description, category, price):
 
 
 # return total price by date (in day month or year by input)
-# if invalid date input or entry non-exist -> return None
 def calculate_by_date(d):
     date = translate_date(d)
     if date:
@@ -59,22 +58,45 @@ def calculate_by_date(d):
         return None
 
 
-# return total price by category
-# if category is None, return total price
-def calculate_by_category(category=None):
-    if category:
+# return total price by category and/or by date
+# if both are None, return total price
+# if invalid date input or entry non-exist -> return None
+def calculate_total(category=None, date=None):
+    c = category.strip().lower() if category else None
+    if c and not date:
         sql = """
-        SELECT SUM(price) 
-        FROM Entry 
-        WHERE category='{}'
-        """.format(category.lower())
+            SELECT SUM(price)
+            FROM Entry
+            WHERE category='{}'
+        """.format(c)
+    elif not c and date:
+        d = translate_date(date)
+        if d:
+            sql = """
+                SELECT SUM(price)
+                FROM Entry
+                WHERE date LIKE '{}'
+            """.format(d)
+        else:
+            return d
+    elif c and date:
+        d = translate_date(date)
+        if d:
+            sql = """
+                SELECT SUM(price)
+                FROM Entry
+                WHERE date LIKE '{}' AND category='{}'
+            """.format(d, c)
+        else:
+            return d
     else:
         sql = """
-            SELECT SUM(price) 
+            SELECT SUM(price)
             FROM Entry
         """
     conn, cursor = execute_query(sql)
-    return round(cursor.fetchone()[0], 2)
+    return cursor.fetchall()[0][0]
+    # return round(cursor.fetchone()[0], 2)
 
 
 # list entries by date (in day month or year by input)
@@ -149,4 +171,4 @@ def export_entries(filename, data):
 #
 # e = list_all()
 # export_entries("test.xls", list_all())
-
+# calculate_total(None, None)
