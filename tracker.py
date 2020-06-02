@@ -42,26 +42,10 @@ def create_entry(description, category, price):
     conn.commit()
 
 
-# return total price by date (in day month or year by input)
-def calculate_by_date(d):
-    date = translate_date(d)
-    if date:
-        sql = """
-            SELECT SUM(price) 
-            FROM Entry 
-            WHERE date LIKE '{}'
-        """.format(date)
-        conn, cursor = execute_query(sql)
-        # TODO: fix date if entry non exist
-        return round(cursor.fetchone()[0], 2)
-    else:
-        return None
-
-
 # return total price by category and/or by date
 # if both are None, return total price
 # if invalid date input or entry non-exist -> return None
-def calculate_total(category=None, date=None):
+def calculate_total(category, date):
     c = category.strip().lower() if category else None
     if c and not date:
         sql = """
@@ -96,44 +80,44 @@ def calculate_total(category=None, date=None):
         """
     conn, cursor = execute_query(sql)
     return cursor.fetchall()[0][0]
-    # return round(cursor.fetchone()[0], 2)
 
 
 # list entries by date (in day month or year by input)
 # if input invalid -> None
 # if no match query -> []
-def list_by_date(d):
-    date = translate_date(d)
-    if date:
+def list_by_specific(category, date):
+    c = category.strip().lower() if category else None
+    if c and not date:
         sql = """
-            SELECT category, description, price 
-            FROM Entry
-            WHERE date LIKE '{}'
-        """.format(date)
-        conn, cursor = execute_query(sql)
-        return cursor.fetchall()
+                SELECT *
+                FROM Entry
+                WHERE category='{}'
+            """.format(c)
+    elif not c and date:
+        d = translate_date(date)
+        if d:
+            sql = """
+                    SELECT *
+                    FROM Entry
+                    WHERE date LIKE '{}'
+                """.format(d)
+        else:
+            return d
+    elif c and date:
+        d = translate_date(date)
+        if d:
+            sql = """
+                    SELECT *
+                    FROM Entry
+                    WHERE date LIKE '{}' AND category='{}'
+                """.format(d, c)
+        else:
+            return d
     else:
-        return None
-
-
-# list entries by category
-# if no match query -> []
-def list_by_category(category):
-    cat = category.lower()
-    sql = """
-        SELECT category, description, price 
-        FROM Entry
-        WHERE category = "{}"
-    """.format(cat)
-    conn, cursor = execute_query(sql)
-    return cursor.fetchall()
-
-
-def list_all():
-    sql = """
-        SELECT *
-        FROM Entry
-    """
+        sql = """
+                SELECT *
+                FROM Entry
+            """
     conn, cursor = execute_query(sql)
     return cursor.fetchall()
 
@@ -163,12 +147,3 @@ def export_entries(filename, data):
             sheet.write(row, col, entry[col])
         row += 1
     book.save(filename)
-
-
-# connect_db()
-# create_entry("coffee", "drinks", "a")
-# print(list_by_date("20200521"))
-#
-# e = list_all()
-# export_entries("test.xls", list_all())
-# calculate_total(None, None)

@@ -9,6 +9,18 @@ LABEL_FONT = ("Verdana", 8)
 
 
 # global helper funcs
+def generate_filename(category, date):
+    ret = ''
+    if category:
+        ret += category
+    if date:
+        ret += date
+    if ret:
+        return ret + '.xls'
+    else:
+        return 'all.xls'
+
+
 def entry_maker(cont, label):
     row = tk.Frame(cont)
     lab = tk.Label(row, width=15, text=label, anchor='w')
@@ -40,7 +52,7 @@ class ExpenseTracker(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for FRAME in (HomePage, EnterPage, ListPage, SumPage, ExportPage):
+        for FRAME in (HomePage, EnterPage, SumPage, ExportPage):
             frame = FRAME(container, self)
             frame.grid(row=0, column=0, sticky='nsew')
             self.frames[FRAME] = frame
@@ -60,12 +72,11 @@ class HomePage(tk.Frame):
         row2 = tk.Frame(self)
         button1 = tk.Button(row1, text="Enter", command=lambda: cont.show_frame(EnterPage), font=LABEL_FONT)
         button1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        button2 = tk.Button(row1, text="Export", command=lambda: cont.show_frame(ExportPage), font=LABEL_FONT)
+        button2 = tk.Button(row1, text="Sum", command=lambda: cont.show_frame(SumPage), font=LABEL_FONT)
         button2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        button3 = tk.Button(row2, text="List", command=lambda: cont.show_frame(ListPage), font=LABEL_FONT)
+        button3 = tk.Button(row2, text="Export", command=lambda: cont.show_frame(ExportPage), font=LABEL_FONT)
         button3.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        button4 = tk.Button(row2, text="Sum", command=lambda: cont.show_frame(SumPage), font=LABEL_FONT)
-        button4.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
         row1.pack(fill=tk.BOTH, expand=True)
         row2.pack(fill=tk.BOTH, expand=True)
 
@@ -116,22 +127,15 @@ class EnterPage(tk.Frame):
                 update_label(self.warning_message, "Price should be numeric", "red")
 
 
-class ListPage(tk.Frame):
-    def __init__(self, parent, cont):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="List Expenses by: ", font=TITLE_FONT)
-        label.pack()
-        button1 = tk.Button(self, text="Back", command=lambda: cont.show_frame(HomePage))
-        button1.pack()
-
-
 class ExportPage(tk.Frame):
     def __init__(self, parent, cont):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Export as Excel", font=TITLE_FONT)
-        label.pack()
-        entry = self.make_form()
-        enter_button = tk.Button(self, text="Enter", command=lambda: self.fetch_file(entry))
+        label1 = tk.Label(self, text="Export By: ", font=TITLE_FONT)
+        label1.pack()
+        label2 = tk.Label(self, text="Export all if blank", font=LABEL_FONT)
+        label2.pack()
+        entries = self.make_form()
+        enter_button = tk.Button(self, text="Enter", command=lambda: self.fetch_file(entries))
         enter_button.pack(side=tk.LEFT, padx=5, pady=5)
         back_button = tk.Button(self, text="Back", command=lambda: cont.show_frame(HomePage))
         back_button.pack(side=tk.LEFT, padx=5, pady=5)
@@ -139,26 +143,24 @@ class ExportPage(tk.Frame):
         self.warning_message.pack()
 
     def make_form(self):
-        ent = entry_maker(self, "Enter Filename: ")
-        return ent
+        ent1 = entry_maker(self, "Category: ")
+        ent2 = entry_maker(self, "Date: ")
+        return [ent1, ent2]
 
-    def fetch_file(self, entry):
-        text = entry.get()
-        clear_entry(entry)
-        if not text:
-            text = "default"
-        filename = text + ".xls"
-        data = list_all()
-        # if file already exists, override
-        # else make new file
+    def fetch_file(self, entries):
+        category = entries[0].get()
+        clear_entry(entries[0])
+        date = entries[1].get()
+        clear_entry(entries[1])
+        filename = generate_filename(category, date)
+        data = list_by_specific(category, date)
         if os.path.exists(filename):
-            # warn if file is currently being used
             try:
                 os.remove(filename)
             except PermissionError:
                 update_label(self.warning_message, "File exists & being used", "red")
         export_entries(filename, data)
-        update_label(self.warning_message, "Success", "green")
+        update_label(self.warning_message, "Exported", "green")
 
 
 class SumPage(tk.Frame):
@@ -196,3 +198,38 @@ class SumPage(tk.Frame):
 connect_db()
 app = ExpenseTracker()
 app.mainloop()
+
+
+# class ExportPage(tk.Frame):
+#     def __init__(self, parent, cont):
+#         tk.Frame.__init__(self, parent)
+#         label = tk.Label(self, text="Export as Excel", font=TITLE_FONT)
+#         label.pack()
+#         entry = self.make_form()
+#         enter_button = tk.Button(self, text="Enter", command=lambda: self.fetch_file(entry))
+#         enter_button.pack(side=tk.LEFT, padx=5, pady=5)
+#         back_button = tk.Button(self, text="Back", command=lambda: cont.show_frame(HomePage))
+#         back_button.pack(side=tk.LEFT, padx=5, pady=5)
+#         self.warning_message = tk.Label(self, text="", font=LABEL_FONT)
+#         self.warning_message.pack()
+#
+#     def make_form(self):
+#         ent = entry_maker(self, "Enter Filename: ")
+#         return ent
+#
+#     def fetch_file(self, entry):
+#         text = entry.get()
+#         clear_entry(entry)
+#         if not text:
+#             text = "default"
+#         filename = text + ".xls"
+#         data = list_all()
+#         if os.path.exists(filename):
+#             try:
+#                 os.remove(filename)
+#             except PermissionError:
+#                 update_label(self.warning_message, "File exists & being used", "red")
+#         export_entries(filename, data)
+#         update_label(self.warning_message, "Success", "green")
+
+
